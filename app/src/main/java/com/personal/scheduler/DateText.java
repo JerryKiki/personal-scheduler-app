@@ -16,6 +16,10 @@ final class DateText {
         return md + " " + KOREAN_DAYS[cal.get(Calendar.DAY_OF_WEEK) - 1];
     }
 
+    static String todayKey() {
+        return new SimpleDateFormat("yyyyMMdd", Locale.KOREA).format(Calendar.getInstance().getTime());
+    }
+
     static int todayBit() {
         return dayBit(Calendar.getInstance().get(Calendar.DAY_OF_WEEK));
     }

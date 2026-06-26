@@ -16,11 +16,12 @@ import android.widget.TextView;
 import java.util.List;
 
 public class WidgetConfigureActivity extends Activity {
+    static final String EXTRA_EDIT_EXISTING = "edit_existing";
+
     private static final int BG = Color.rgb(255, 248, 244);
     private static final int CARD = Color.WHITE;
     private static final int PEACH = Color.rgb(255, 239, 228);
     private static final int PINK = Color.rgb(245, 141, 151);
-    private static final int PINK_DARK = Color.rgb(207, 92, 112);
     private static final int INK = Color.rgb(42, 38, 48);
     private static final int MUTED = Color.rgb(139, 122, 128);
     private static final int LINE = Color.rgb(245, 220, 210);
@@ -28,6 +29,8 @@ public class WidgetConfigureActivity extends Activity {
     private int widgetId = AppWidgetManager.INVALID_APPWIDGET_ID;
     private long selectedCategoryId = -1;
     private int selectedFontSize = WidgetPrefs.FONT_SMALL;
+    private int selectedBg = WidgetPrefs.BG_WHITE;
+    private int selectedText = WidgetPrefs.TEXT_DARK;
     private LinearLayout root;
     private List<Category> categories;
 
@@ -48,7 +51,11 @@ public class WidgetConfigureActivity extends Activity {
         }
 
         categories = new SchedulerDb(this).categories();
-        if (!categories.isEmpty()) {
+        selectedCategoryId = WidgetPrefs.categoryId(this, widgetId);
+        selectedFontSize = WidgetPrefs.fontSize(this, widgetId);
+        selectedBg = WidgetPrefs.bgColor(this, widgetId);
+        selectedText = WidgetPrefs.textColor(this, widgetId);
+        if (selectedCategoryId < 0 && !categories.isEmpty()) {
             selectedCategoryId = categories.get(0).id;
         }
         render();
@@ -57,6 +64,7 @@ public class WidgetConfigureActivity extends Activity {
     private void render() {
         ScrollView scroll = new ScrollView(this);
         scroll.setBackgroundColor(BG);
+        scroll.setClipToPadding(false);
         scroll.setPadding(0, systemDimen("status_bar_height"), 0, systemDimen("navigation_bar_height"));
 
         root = new LinearLayout(this);
@@ -68,7 +76,7 @@ public class WidgetConfigureActivity extends Activity {
         TextView title = text("위젯 설정", 28, INK, true);
         title.setPadding(0, 0, 0, dp(8));
         root.addView(title, match());
-        root.addView(text("홈 화면에 표시할 스케줄과 글자 크기를 골라요.", 15, MUTED, false), spaced());
+        root.addView(text("홈 화면에 표시할 스케줄과 스타일을 골라요.", 15, MUTED, false), spaced());
 
         if (categories.isEmpty()) {
             LinearLayout card = card();
@@ -79,16 +87,18 @@ public class WidgetConfigureActivity extends Activity {
 
         addCategoryChooser();
         addFontChooser();
+        addBackgroundChooser();
+        addTextColorChooser();
 
-        Button save = button("위젯 추가", true);
+        Button save = button("저장", true);
         save.setOnClickListener(v -> saveAndFinish());
         root.addView(save, match());
     }
 
     private void addCategoryChooser() {
         LinearLayout card = card();
-        card.addView(text("스케줄", 20, INK, true), match());
-        card.addView(text("위젯에 띄울 카테고리", 14, MUTED, false), spacedSmall());
+        card.addView(text("카테고리", 20, INK, true), match());
+        card.addView(text("위젯에 띄울 카테고리를 선택해요.", 14, MUTED, false), spacedSmall());
 
         for (Category category : categories) {
             Button button = button((category.id == selectedCategoryId ? "✓ " : "") + category.name,
@@ -106,30 +116,55 @@ public class WidgetConfigureActivity extends Activity {
     private void addFontChooser() {
         LinearLayout card = card();
         card.addView(text("글자 크기", 20, INK, true), match());
-        card.addView(text("Small도 기존 위젯보다 살짝 크게 잡았어요.", 14, MUTED, false), spacedSmall());
+        card.addView(text("위젯에 표시할 폰트 사이즈를 선택해요.", 14, MUTED, false), spacedSmall());
 
-        LinearLayout row = new LinearLayout(this);
-        row.setOrientation(LinearLayout.HORIZONTAL);
-        addFontButton(row, "Small", WidgetPrefs.FONT_SMALL);
-        addFontButton(row, "Medium", WidgetPrefs.FONT_MEDIUM);
-        addFontButton(row, "Large", WidgetPrefs.FONT_LARGE);
+        LinearLayout row = row();
+        addChoice(row, "Small", selectedFontSize == WidgetPrefs.FONT_SMALL, () -> selectedFontSize = WidgetPrefs.FONT_SMALL);
+        addChoice(row, "Medium", selectedFontSize == WidgetPrefs.FONT_MEDIUM, () -> selectedFontSize = WidgetPrefs.FONT_MEDIUM);
+        addChoice(row, "Large", selectedFontSize == WidgetPrefs.FONT_LARGE, () -> selectedFontSize = WidgetPrefs.FONT_LARGE);
         card.addView(row, match());
         root.addView(card, spaced());
     }
 
-    private void addFontButton(LinearLayout row, String label, int value) {
-        Button button = button(label, selectedFontSize == value);
+    private void addBackgroundChooser() {
+        LinearLayout card = card();
+        card.addView(text("배경색", 20, INK, true), match());
+        card.addView(text("테마 색상 중 하나를 골라요.", 14, MUTED, false), spacedSmall());
+
+        LinearLayout row = row();
+        addChoice(row, "White", selectedBg == WidgetPrefs.BG_WHITE, () -> selectedBg = WidgetPrefs.BG_WHITE);
+        addChoice(row, "Cream", selectedBg == WidgetPrefs.BG_CREAM, () -> selectedBg = WidgetPrefs.BG_CREAM);
+        addChoice(row, "Peach", selectedBg == WidgetPrefs.BG_PEACH, () -> selectedBg = WidgetPrefs.BG_PEACH);
+        addChoice(row, "Pink", selectedBg == WidgetPrefs.BG_PINK, () -> selectedBg = WidgetPrefs.BG_PINK);
+        card.addView(row, match());
+        root.addView(card, spaced());
+    }
+
+    private void addTextColorChooser() {
+        LinearLayout card = card();
+        card.addView(text("폰트색", 20, INK, true), match());
+        card.addView(text("검정 또는 하양으로 선택해요.", 14, MUTED, false), spacedSmall());
+
+        LinearLayout row = row();
+        addChoice(row, "검정", selectedText == WidgetPrefs.TEXT_DARK, () -> selectedText = WidgetPrefs.TEXT_DARK);
+        addChoice(row, "하양", selectedText == WidgetPrefs.TEXT_LIGHT, () -> selectedText = WidgetPrefs.TEXT_LIGHT);
+        card.addView(row, match());
+        root.addView(card, spaced());
+    }
+
+    private void addChoice(LinearLayout row, String label, boolean selected, Runnable action) {
+        Button button = button(label, selected);
         button.setOnClickListener(v -> {
-            selectedFontSize = value;
+            action.run();
             render();
         });
         LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f);
-        params.setMarginEnd(value == WidgetPrefs.FONT_LARGE ? 0 : dp(8));
+        params.setMarginEnd(dp(8));
         row.addView(button, params);
     }
 
     private void saveAndFinish() {
-        WidgetPrefs.save(this, widgetId, selectedCategoryId, selectedFontSize);
+        WidgetPrefs.save(this, widgetId, selectedCategoryId, selectedFontSize, selectedBg, selectedText);
         AppWidgetManager manager = AppWidgetManager.getInstance(this);
         TodayWidgetProvider.updateWidget(this, manager, widgetId);
 
@@ -143,20 +178,30 @@ public class WidgetConfigureActivity extends Activity {
         LinearLayout card = new LinearLayout(this);
         card.setOrientation(LinearLayout.VERTICAL);
         card.setPadding(dp(16), dp(16), dp(16), dp(16));
+        card.setElevation(0f);
         card.setBackground(rounded(CARD, 28, 0, CARD));
         return card;
+    }
+
+    private LinearLayout row() {
+        LinearLayout row = new LinearLayout(this);
+        row.setOrientation(LinearLayout.HORIZONTAL);
+        row.setGravity(Gravity.CENTER_VERTICAL);
+        return row;
     }
 
     private Button button(String label, boolean selected) {
         Button button = new Button(this);
         button.setText(label);
         button.setAllCaps(false);
+        button.setStateListAnimator(null);
+        button.setElevation(0f);
         button.setTextSize(15);
         button.setTypeface(Typeface.DEFAULT, Typeface.BOLD);
-        button.setTextColor(selected ? Color.WHITE : (label.equals("위젯 추가") ? Color.WHITE : INK));
+        button.setTextColor(selected ? Color.WHITE : INK);
         button.setMinHeight(dp(48));
         button.setPadding(dp(14), 0, dp(14), 0);
-        button.setBackground(rounded(selected || label.equals("위젯 추가") ? PINK : PEACH, 22, selected ? 0 : 1, LINE));
+        button.setBackground(rounded(selected ? PINK : PEACH, 22, selected ? 0 : 1, LINE));
         return button;
     }
 

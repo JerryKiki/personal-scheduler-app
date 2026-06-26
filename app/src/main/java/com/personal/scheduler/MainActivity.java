@@ -49,6 +49,8 @@ public class MainActivity extends Activity {
     private long selectedCategoryId = -1;
     private String pendingBackupText;
     private String pendingBackupCode;
+    private boolean categoryListExpanded = true;
+    private boolean routineListExpanded = true;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -98,7 +100,7 @@ public class MainActivity extends Activity {
         eyebrow.setTextColor(PINK_DARK);
         card.addView(eyebrow, match());
 
-        TextView title = title("개인 스케줄러", 30);
+        TextView title = title("루틴 스케줄러", 30);
         title.setPadding(0, dp(4), 0, dp(6));
         card.addView(title, match());
 
@@ -137,7 +139,7 @@ public class MainActivity extends Activity {
                 selectedCategoryId = id;
             }
             hideKeyboard(input);
-            render();
+            rerenderKeepingScroll();
         });
         row.addView(input, weightedWithEndMargin());
         row.addView(add, wrap());
@@ -147,7 +149,10 @@ public class MainActivity extends Activity {
 
     private void addCategoryList(List<Category> categories) {
         LinearLayout card = card(CARD);
-        addCardHeader(card, "스케줄 목록", "위젯에 띄울 카테고리를 선택해요.");
+        addCardHeader(card, "카테고리 목록", "위젯에 띄울 카테고리를 선택해요.", categoryListExpanded, () -> {
+            categoryListExpanded = !categoryListExpanded;
+            rerenderKeepingScroll();
+        });
 
         if (categories.isEmpty()) {
             card.addView(muted("아직 카테고리가 없어. 먼저 하나 추가해줘."), match());
@@ -156,13 +161,16 @@ public class MainActivity extends Activity {
         }
 
         for (Category category : categories) {
+            if (!categoryListExpanded && category.id != selectedCategoryId) {
+                continue;
+            }
             LinearLayout row = row();
             Button select = pillButton((category.id == selectedCategoryId ? "✓ " : "") + category.name,
                     category.id == selectedCategoryId);
             select.setGravity(Gravity.START | Gravity.CENTER_VERTICAL);
             select.setOnClickListener(v -> {
                 selectedCategoryId = category.id;
-                render();
+                rerenderKeepingScroll();
             });
 
             Button delete = smallButton("삭제");
@@ -172,7 +180,7 @@ public class MainActivity extends Activity {
                     selectedCategoryId = -1;
                 }
                 updateWidgets();
-                render();
+                rerenderKeepingScroll();
             });
 
             row.addView(select, weightedWithEndMargin());
@@ -189,7 +197,7 @@ public class MainActivity extends Activity {
         }
 
         LinearLayout card = card(CARD);
-        addCardHeader(card, category.name + " 상세 스케줄", "내용, 횟수, 반복 요일을 정해요.");
+        addCardHeader(card, category.name + " 루틴", "내용, 횟수, 반복 요일을 정해요.");
 
         EditText content = input("내용: 마운틴 클라이머");
         EditText amount = input("횟수/분량: 100회");
@@ -238,7 +246,7 @@ public class MainActivity extends Activity {
             db.addItem(selectedCategoryId, contentText, amountText, mask);
             updateWidgets();
             hideKeyboard(content);
-            render();
+            rerenderKeepingScroll();
         });
         card.addView(add, match());
         root.addView(card, spaced());
@@ -247,7 +255,15 @@ public class MainActivity extends Activity {
     private void addItemList() {
         List<ScheduleItem> items = db.items(selectedCategoryId);
         LinearLayout card = card(CARD);
-        addCardHeader(card, "등록된 루틴", "반복 규칙을 한눈에 확인해요.");
+        addCardHeader(card, "등록된 루틴", "반복 규칙을 한눈에 확인해요.", routineListExpanded, () -> {
+            routineListExpanded = !routineListExpanded;
+            rerenderKeepingScroll();
+        });
+
+        if (!routineListExpanded) {
+            root.addView(card, spaced());
+            return;
+        }
 
         if (items.isEmpty()) {
             card.addView(muted("아직 상세 스케줄이 없어."), match());
@@ -257,13 +273,13 @@ public class MainActivity extends Activity {
 
         for (ScheduleItem item : items) {
             LinearLayout row = roundedRow();
-            TextView text = body("○ " + item.content + suffix(item.amount) + "\n반복: " + DateText.repeatText(item.repeatMask),
+            TextView text = body("• " + item.content + suffix(item.amount) + "\n반복: " + DateText.repeatText(item.repeatMask),
                     15, INK);
             Button delete = smallButton("삭제");
             delete.setOnClickListener(v -> {
                 db.deleteItem(item.id);
                 updateWidgets();
-                render();
+                rerenderKeepingScroll();
             });
             row.addView(text, weightedWithEndMargin());
             row.addView(delete, wrap());
@@ -288,7 +304,7 @@ public class MainActivity extends Activity {
             builder.append("오늘 반복되는 스케줄 없음");
         } else {
             for (ScheduleItem item : items) {
-                builder.append("○ ").append(item.content).append(suffix(item.amount)).append("\n");
+                builder.append("• ").append(item.content).append(suffix(item.amount)).append("\n");
             }
         }
         TextView preview = body(builder.toString().trim(), 16, INK);
@@ -387,6 +403,28 @@ public class MainActivity extends Activity {
     }
 
     private void addCardHeader(LinearLayout card, String title, String subtitle) {
+        addCardHeader(card, title, subtitle, null, null);
+    }
+
+    private void addCardHeader(LinearLayout card, String title, String subtitle, Boolean expanded, Runnable toggle) {
+        if (expanded == null) {
+            TextView titleView = title(title, 20);
+            card.addView(titleView, match());
+        } else {
+            LinearLayout row = row();
+            TextView titleView = title(title, 20);
+            Button toggleButton = smallButton(expanded ? "접기" : "펼치기");
+            toggleButton.setOnClickListener(v -> toggle.run());
+            row.addView(titleView, weightedWithEndMargin());
+            row.addView(toggleButton, wrap());
+            card.addView(row, match());
+        }
+        TextView sub = body(subtitle, 14, MUTED);
+        sub.setPadding(0, dp(4), 0, dp(12));
+        card.addView(sub, match());
+    }
+
+    private void legacyUnusedHeader(LinearLayout card, String title, String subtitle) {
         TextView titleView = title(title, 20);
         card.addView(titleView, match());
         TextView sub = body(subtitle, 14, MUTED);
@@ -433,6 +471,8 @@ public class MainActivity extends Activity {
         Button button = new Button(this);
         button.setText(text);
         button.setAllCaps(false);
+        button.setStateListAnimator(null);
+        button.setElevation(0f);
         button.setTextSize(15);
         button.setTypeface(Typeface.DEFAULT, Typeface.BOLD);
         button.setTextColor(primary ? Color.WHITE : PINK_DARK);
@@ -549,6 +589,12 @@ public class MainActivity extends Activity {
 
     private void toast(String message) {
         Toast.makeText(this, message, Toast.LENGTH_LONG).show();
+    }
+
+    private void rerenderKeepingScroll() {
+        int y = scroll == null ? 0 : scroll.getScrollY();
+        render();
+        scroll.post(() -> scroll.scrollTo(0, y));
     }
 
     private int dp(int value) {
