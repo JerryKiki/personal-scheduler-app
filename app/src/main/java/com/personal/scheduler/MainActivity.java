@@ -164,7 +164,7 @@ public class MainActivity extends Activity {
             if (!categoryListExpanded && category.id != selectedCategoryId) {
                 continue;
             }
-            LinearLayout row = row();
+            LinearLayout row = categoryRow(category.id == selectedCategoryId);
             Button select = pillButton((category.id == selectedCategoryId ? "✓ " : "") + category.name,
                     category.id == selectedCategoryId);
             select.setGravity(Gravity.START | Gravity.CENTER_VERTICAL);
@@ -541,6 +541,13 @@ public class MainActivity extends Activity {
         return row;
     }
 
+    private LinearLayout categoryRow(boolean selected) {
+        LinearLayout row = row();
+        row.setPadding(dp(10), dp(10), dp(10), dp(10));
+        row.setBackground(rounded(selected ? PINK : Color.rgb(255, 250, 247), 22, selected ? 0 : 1, selected ? PINK : LINE));
+        return row;
+    }
+
     private LinearLayout row() {
         LinearLayout row = new LinearLayout(this);
         row.setOrientation(LinearLayout.HORIZONTAL);
@@ -579,7 +586,12 @@ public class MainActivity extends Activity {
     private Button pillButton(String text, boolean selected) {
         Button button = actionButton(text, selected);
         button.setTextColor(selected ? Color.WHITE : INK);
-        button.setBackground(rounded(selected ? PINK : Color.rgb(255, 250, 247), 20, 1, selected ? PINK : LINE));
+        button.setMinWidth(0);
+        button.setMinimumWidth(0);
+        button.setMinHeight(dp(38));
+        button.setMinimumHeight(dp(38));
+        button.setPadding(dp(8), 0, dp(8), 0);
+        button.setBackgroundColor(Color.TRANSPARENT);
         return button;
     }
 
@@ -606,10 +618,13 @@ public class MainActivity extends Activity {
     }
 
     private TextView chevron(boolean expanded) {
-        TextView view = body(expanded ? "⌄" : "›", 24, PINK_DARK);
+        TextView view = body("›", 24, PINK_DARK);
         view.setGravity(Gravity.CENTER);
         view.setTypeface(Typeface.DEFAULT, Typeface.BOLD);
         view.setPadding(0, 0, 0, 0);
+        view.setRotation(expanded ? 90f : 0f);
+        view.setTranslationY(expanded ? dp(-1) : 0f);
+        view.setTranslationX(expanded ? dp(1) : 0f);
         return view;
     }
 
