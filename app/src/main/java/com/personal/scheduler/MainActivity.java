@@ -173,7 +173,9 @@ public class MainActivity extends Activity {
                 rerenderKeepingScroll();
             });
 
-            Button delete = smallButton("삭제");
+            Button edit = iconButton("•••", PEACH_SOFT, PINK_DARK);
+            edit.setOnClickListener(v -> showCategoryEditor(category));
+            Button delete = iconButton("X", Color.rgb(255, 232, 232), PINK_DARK);
             delete.setOnClickListener(v -> {
                 db.deleteCategory(category.id);
                 if (selectedCategoryId == category.id) {
@@ -184,6 +186,7 @@ public class MainActivity extends Activity {
             });
 
             row.addView(select, weightedWithEndMargin());
+            row.addView(edit, iconButtonParams());
             row.addView(delete, wrap());
             card.addView(row, compactSpaced());
         }
@@ -275,13 +278,16 @@ public class MainActivity extends Activity {
             LinearLayout row = roundedRow();
             TextView text = body("• " + item.content + suffix(item.amount) + "\n반복: " + DateText.repeatText(item.repeatMask),
                     15, INK);
-            Button delete = smallButton("삭제");
+            Button edit = iconButton("•••", PEACH_SOFT, PINK_DARK);
+            edit.setOnClickListener(v -> showRoutineEditor(item));
+            Button delete = iconButton("X", Color.rgb(255, 232, 232), PINK_DARK);
             delete.setOnClickListener(v -> {
                 db.deleteItem(item.id);
                 updateWidgets();
                 rerenderKeepingScroll();
             });
             row.addView(text, weightedWithEndMargin());
+            row.addView(edit, iconButtonParams());
             row.addView(delete, wrap());
             card.addView(row, compactSpaced());
         }
@@ -312,6 +318,94 @@ public class MainActivity extends Activity {
         preview.setBackground(rounded(CARD, 24, 0, CARD));
         card.addView(preview, match());
         root.addView(card, spaced());
+    }
+
+    private void showCategoryEditor(Category category) {
+        EditText input = input("카테고리 이름");
+        input.setText(category.name);
+        input.setSelection(input.getText().length());
+        int padding = dp(18);
+        LinearLayout box = new LinearLayout(this);
+        box.setOrientation(LinearLayout.VERTICAL);
+        box.setPadding(padding, dp(8), padding, 0);
+        box.addView(input, match());
+
+        new AlertDialog.Builder(this)
+                .setTitle("카테고리 수정")
+                .setView(box)
+                .setNegativeButton("취소", null)
+                .setPositiveButton("저장", (dialog, which) -> {
+                    String name = input.getText().toString().trim();
+                    if (name.isEmpty()) {
+                        toast("카테고리 이름을 입력해줘");
+                        return;
+                    }
+                    db.updateCategory(category.id, name);
+                    updateWidgets();
+                    rerenderKeepingScroll();
+                })
+                .show();
+    }
+
+    private void showRoutineEditor(ScheduleItem item) {
+        LinearLayout box = new LinearLayout(this);
+        box.setOrientation(LinearLayout.VERTICAL);
+        box.setPadding(dp(18), dp(8), dp(18), 0);
+
+        EditText content = input("내용");
+        content.setText(item.content);
+        content.setSelection(content.getText().length());
+        EditText amount = input("횟수/분량");
+        amount.setText(item.amount);
+        amount.setSelection(amount.getText().length());
+        box.addView(content, compactSpaced());
+        box.addView(amount, compactSpaced());
+
+        LinearLayout days = new LinearLayout(this);
+        days.setOrientation(LinearLayout.HORIZONTAL);
+        days.setGravity(Gravity.CENTER_VERTICAL);
+        CheckBox[] boxes = new CheckBox[7];
+        String[] labels = {"일", "월", "화", "수", "목", "금", "토"};
+        for (int i = 0; i < labels.length; i++) {
+            CheckBox checkBox = new CheckBox(this);
+            checkBox.setText(labels[i]);
+            checkBox.setTextColor(INK);
+            checkBox.setTextSize(14);
+            checkBox.setButtonTintList(new ColorStateList(
+                    new int[][]{new int[]{android.R.attr.state_checked}, new int[]{}},
+                    new int[]{PINK_DARK, Color.rgb(210, 192, 188)}));
+            checkBox.setChecked((item.repeatMask & (1 << i)) != 0);
+            boxes[i] = checkBox;
+            days.addView(checkBox, new LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f));
+        }
+        box.addView(days, match());
+
+        new AlertDialog.Builder(this)
+                .setTitle("루틴 수정")
+                .setView(box)
+                .setNegativeButton("취소", null)
+                .setPositiveButton("저장", (dialog, which) -> {
+                    String contentText = content.getText().toString().trim();
+                    String amountText = amount.getText().toString().trim();
+                    int mask = 0;
+                    for (int i = 0; i < boxes.length; i++) {
+                        if (boxes[i].isChecked()) {
+                            mask |= 1 << i;
+                        }
+                    }
+                    if (contentText.isEmpty()) {
+                        toast("내용을 입력해줘");
+                        return;
+                    }
+                    if (mask == 0) {
+                        toast("반복 요일을 하나 이상 골라줘");
+                        return;
+                    }
+                    db.updateItem(item.id, contentText, amountText, mask);
+                    updateWidgets();
+                    rerenderKeepingScroll();
+                })
+                .show();
     }
 
     private void exportBackup() {
@@ -497,6 +591,17 @@ public class MainActivity extends Activity {
         return button;
     }
 
+    private Button iconButton(String text, int bgColor, int textColor) {
+        Button button = actionButton(text, false);
+        button.setTextColor(textColor);
+        button.setTextSize(15);
+        button.setMinWidth(dp(44));
+        button.setMinHeight(dp(38));
+        button.setPadding(0, 0, 0, 0);
+        button.setBackground(rounded(bgColor, 18, 0, bgColor));
+        return button;
+    }
+
     private TextView title(String text, int sp) {
         TextView view = body(text, sp, INK);
         view.setTypeface(Typeface.DEFAULT, Typeface.BOLD);
@@ -541,6 +646,12 @@ public class MainActivity extends Activity {
 
     private LinearLayout.LayoutParams wrap() {
         return new LinearLayout.LayoutParams(LinearLayout.LayoutParams.WRAP_CONTENT, LinearLayout.LayoutParams.WRAP_CONTENT);
+    }
+
+    private LinearLayout.LayoutParams iconButtonParams() {
+        LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(dp(44), LinearLayout.LayoutParams.WRAP_CONTENT);
+        params.setMarginEnd(dp(8));
+        return params;
     }
 
     private LinearLayout.LayoutParams weight() {

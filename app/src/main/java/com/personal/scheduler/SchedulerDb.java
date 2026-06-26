@@ -51,6 +51,12 @@ final class SchedulerDb extends SQLiteOpenHelper {
         db.delete("categories", "id = ?", new String[]{String.valueOf(categoryId)});
     }
 
+    boolean updateCategory(long categoryId, String name) {
+        ContentValues values = new ContentValues();
+        values.put("name", name.trim());
+        return getWritableDatabase().update("categories", values, "id = ?", new String[]{String.valueOf(categoryId)}) > 0;
+    }
+
     long addItem(long categoryId, String content, String amount, int repeatMask) {
         ContentValues values = new ContentValues();
         values.put("category_id", categoryId);
@@ -62,6 +68,14 @@ final class SchedulerDb extends SQLiteOpenHelper {
 
     void deleteItem(long itemId) {
         getWritableDatabase().delete("schedule_items", "id = ?", new String[]{String.valueOf(itemId)});
+    }
+
+    boolean updateItem(long itemId, String content, String amount, int repeatMask) {
+        ContentValues values = new ContentValues();
+        values.put("content", content.trim());
+        values.put("amount", amount.trim());
+        values.put("repeat_mask", repeatMask);
+        return getWritableDatabase().update("schedule_items", values, "id = ?", new String[]{String.valueOf(itemId)}) > 0;
     }
 
     List<Category> categories() {
