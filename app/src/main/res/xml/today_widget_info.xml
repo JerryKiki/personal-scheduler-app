@@ -2,7 +2,7 @@
     android:configure="com.personal.scheduler.WidgetConfigureActivity"
     android:description="@string/app_name"
     android:initialLayout="@layout/today_widget"
-    android:minWidth="180dp"
+    android:minWidth="110dp"
     android:minHeight="110dp"
     android:previewLayout="@layout/today_widget"
     android:resizeMode="horizontal|vertical"

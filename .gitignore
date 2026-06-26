@@ -10,5 +10,6 @@ local.properties
 
 .agents/
 .codex/
+.codex-remote-attachments/
 
 personal-scheduler-debug-apk.zip

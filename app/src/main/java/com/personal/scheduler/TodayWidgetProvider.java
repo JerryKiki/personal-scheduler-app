@@ -5,6 +5,7 @@ import android.appwidget.AppWidgetProvider;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
+import android.util.TypedValue;
 import android.widget.RemoteViews;
 
 import java.util.List;
@@ -34,9 +35,11 @@ public class TodayWidgetProvider extends AppWidgetProvider {
     static void updateWidget(Context context, AppWidgetManager manager, int widgetId) {
         RemoteViews views = new RemoteViews(context.getPackageName(), R.layout.today_widget);
         long categoryId = WidgetPrefs.categoryId(context, widgetId);
+        int fontSize = WidgetPrefs.fontSize(context, widgetId);
         SchedulerDb db = new SchedulerDb(context);
         Category category = db.category(categoryId);
 
+        applyFontSize(views, fontSize);
         if (category == null) {
             views.setTextViewText(R.id.widgetTitle, "오늘의 할일");
             views.setTextViewText(R.id.widgetBody, "앱을 열어 위젯 카테고리를 다시 설정해줘.");
@@ -65,5 +68,22 @@ public class TodayWidgetProvider extends AppWidgetProvider {
             builder.append("\n");
         }
         return builder.toString().trim();
+    }
+
+    private static void applyFontSize(RemoteViews views, int fontSize) {
+        float title;
+        float body;
+        if (fontSize == WidgetPrefs.FONT_LARGE) {
+            title = 21;
+            body = 18;
+        } else if (fontSize == WidgetPrefs.FONT_MEDIUM) {
+            title = 19;
+            body = 16;
+        } else {
+            title = 17;
+            body = 15;
+        }
+        views.setTextViewTextSize(R.id.widgetTitle, TypedValue.COMPLEX_UNIT_SP, title);
+        views.setTextViewTextSize(R.id.widgetBody, TypedValue.COMPLEX_UNIT_SP, body);
     }
 }
