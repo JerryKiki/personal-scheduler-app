@@ -1,0 +1,10 @@
+<appwidget-provider xmlns:android="http://schemas.android.com/apk/res/android"
+    android:configure="com.personal.scheduler.WidgetConfigureActivity"
+    android:description="@string/app_name"
+    android:initialLayout="@layout/today_widget"
+    android:minWidth="180dp"
+    android:minHeight="110dp"
+    android:previewLayout="@layout/today_widget"
+    android:resizeMode="horizontal|vertical"
+    android:updatePeriodMillis="1800000"
+    android:widgetCategory="home_screen" />
