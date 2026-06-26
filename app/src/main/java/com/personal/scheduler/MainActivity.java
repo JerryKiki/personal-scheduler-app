@@ -187,7 +187,7 @@ public class MainActivity extends Activity {
 
             row.addView(select, weightedWithEndMargin());
             row.addView(edit, iconButtonParams());
-            row.addView(delete, wrap());
+            row.addView(delete, iconButtonParamsNoMargin());
             card.addView(row, compactSpaced());
         }
         root.addView(card, spaced());
@@ -288,7 +288,7 @@ public class MainActivity extends Activity {
             });
             row.addView(text, weightedWithEndMargin());
             row.addView(edit, iconButtonParams());
-            row.addView(delete, wrap());
+            row.addView(delete, iconButtonParamsNoMargin());
             card.addView(row, compactSpaced());
         }
         root.addView(card, spaced());
@@ -652,6 +652,10 @@ public class MainActivity extends Activity {
         LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(dp(44), LinearLayout.LayoutParams.WRAP_CONTENT);
         params.setMarginEnd(dp(8));
         return params;
+    }
+
+    private LinearLayout.LayoutParams iconButtonParamsNoMargin() {
+        return new LinearLayout.LayoutParams(dp(44), LinearLayout.LayoutParams.WRAP_CONTENT);
     }
 
     private LinearLayout.LayoutParams weight() {
