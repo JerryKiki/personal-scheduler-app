@@ -137,7 +137,6 @@ public class WidgetConfigureActivity extends Activity {
         addChoice(row, "White", selectedBg == WidgetPrefs.BG_WHITE, () -> selectedBg = WidgetPrefs.BG_WHITE);
         addChoice(row, "Cream", selectedBg == WidgetPrefs.BG_CREAM, () -> selectedBg = WidgetPrefs.BG_CREAM);
         addChoice(row, "Peach", selectedBg == WidgetPrefs.BG_PEACH, () -> selectedBg = WidgetPrefs.BG_PEACH);
-        addChoice(row, "Pink", selectedBg == WidgetPrefs.BG_PINK, () -> selectedBg = WidgetPrefs.BG_PINK);
         card.addView(row, match());
         root.addView(card, spaced());
     }

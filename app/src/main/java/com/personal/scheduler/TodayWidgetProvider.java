@@ -136,9 +136,6 @@ public class TodayWidgetProvider extends AppWidgetProvider {
 
     private static int backgroundResource(Context context, int widgetId) {
         int bg = WidgetPrefs.bgColor(context, widgetId);
-        if (bg == WidgetPrefs.BG_PINK) {
-            return R.drawable.widget_background_pink;
-        }
         if (bg == WidgetPrefs.BG_PEACH) {
             return R.drawable.widget_background_peach;
         }
