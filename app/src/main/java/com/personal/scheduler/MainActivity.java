@@ -507,10 +507,10 @@ public class MainActivity extends Activity {
         } else {
             LinearLayout row = row();
             TextView titleView = title(title, 20);
-            Button toggleButton = smallButton(expanded ? "접기" : "펼치기");
+            TextView toggleButton = chevron(expanded);
             toggleButton.setOnClickListener(v -> toggle.run());
             row.addView(titleView, weightedWithEndMargin());
-            row.addView(toggleButton, wrap());
+            row.addView(toggleButton, chevronParams());
             card.addView(row, match());
         }
         TextView sub = body(subtitle, 14, MUTED);
@@ -595,11 +595,22 @@ public class MainActivity extends Activity {
         Button button = actionButton(text, false);
         button.setTextColor(textColor);
         button.setTextSize(15);
-        button.setMinWidth(dp(44));
+        button.setMinWidth(0);
+        button.setMinimumWidth(0);
+        button.setMinEms(0);
         button.setMinHeight(dp(38));
+        button.setMinimumHeight(dp(38));
         button.setPadding(0, 0, 0, 0);
         button.setBackground(rounded(bgColor, 18, 0, bgColor));
         return button;
+    }
+
+    private TextView chevron(boolean expanded) {
+        TextView view = body(expanded ? "⌄" : "›", 24, PINK_DARK);
+        view.setGravity(Gravity.CENTER);
+        view.setTypeface(Typeface.DEFAULT, Typeface.BOLD);
+        view.setPadding(0, 0, 0, 0);
+        return view;
     }
 
     private TextView title(String text, int sp) {
@@ -649,13 +660,17 @@ public class MainActivity extends Activity {
     }
 
     private LinearLayout.LayoutParams iconButtonParams() {
-        LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(dp(44), LinearLayout.LayoutParams.WRAP_CONTENT);
+        LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(dp(38), dp(38));
         params.setMarginEnd(dp(8));
         return params;
     }
 
     private LinearLayout.LayoutParams iconButtonParamsNoMargin() {
-        return new LinearLayout.LayoutParams(dp(44), LinearLayout.LayoutParams.WRAP_CONTENT);
+        return new LinearLayout.LayoutParams(dp(38), dp(38));
+    }
+
+    private LinearLayout.LayoutParams chevronParams() {
+        return new LinearLayout.LayoutParams(dp(32), dp(32));
     }
 
     private LinearLayout.LayoutParams weight() {
