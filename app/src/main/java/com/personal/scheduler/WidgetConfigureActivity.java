@@ -31,6 +31,7 @@ public class WidgetConfigureActivity extends Activity {
     private int selectedFontSize = WidgetPrefs.FONT_SMALL;
     private int selectedBg = WidgetPrefs.BG_WHITE;
     private int selectedText = WidgetPrefs.TEXT_DARK;
+    private boolean editExisting;
     private LinearLayout root;
     private List<Category> categories;
 
@@ -44,6 +45,7 @@ public class WidgetConfigureActivity extends Activity {
         Bundle extras = getIntent().getExtras();
         if (extras != null) {
             widgetId = extras.getInt(AppWidgetManager.EXTRA_APPWIDGET_ID, AppWidgetManager.INVALID_APPWIDGET_ID);
+            editExisting = extras.getBoolean(EXTRA_EDIT_EXISTING, false);
         }
         if (widgetId == AppWidgetManager.INVALID_APPWIDGET_ID) {
             finish();
@@ -171,7 +173,20 @@ public class WidgetConfigureActivity extends Activity {
         Intent result = new Intent();
         result.putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, widgetId);
         setResult(RESULT_OK, result);
-        finish();
+        closeEditor();
+    }
+
+    @Override
+    public void onBackPressed() {
+        closeEditor();
+    }
+
+    private void closeEditor() {
+        if (editExisting) {
+            finishAndRemoveTask();
+        } else {
+            finish();
+        }
     }
 
     private LinearLayout card() {

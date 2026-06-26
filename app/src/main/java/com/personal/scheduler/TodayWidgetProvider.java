@@ -93,6 +93,7 @@ public class TodayWidgetProvider extends AppWidgetProvider {
         Intent configure = new Intent(context, WidgetConfigureActivity.class);
         configure.putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, widgetId);
         configure.putExtra(WidgetConfigureActivity.EXTRA_EDIT_EXISTING, true);
+        configure.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
         views.setOnClickPendingIntent(R.id.widgetEdit,
                 PendingIntent.getActivity(context, widgetId + 100_000, configure,
                         PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE));
