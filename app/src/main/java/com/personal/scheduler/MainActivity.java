@@ -176,14 +176,7 @@ public class MainActivity extends Activity {
             Button edit = iconButton("•••", PEACH_SOFT, PINK_DARK);
             edit.setOnClickListener(v -> showCategoryEditor(category));
             Button delete = iconButton("X", Color.rgb(255, 232, 232), PINK_DARK);
-            delete.setOnClickListener(v -> {
-                db.deleteCategory(category.id);
-                if (selectedCategoryId == category.id) {
-                    selectedCategoryId = -1;
-                }
-                updateWidgets();
-                rerenderKeepingScroll();
-            });
+            delete.setOnClickListener(v -> confirmDeleteCategory(category));
 
             row.addView(select, weightedWithEndMargin());
             row.addView(edit, iconButtonParams());
@@ -281,11 +274,7 @@ public class MainActivity extends Activity {
             Button edit = iconButton("•••", PEACH_SOFT, PINK_DARK);
             edit.setOnClickListener(v -> showRoutineEditor(item));
             Button delete = iconButton("X", Color.rgb(255, 232, 232), PINK_DARK);
-            delete.setOnClickListener(v -> {
-                db.deleteItem(item.id);
-                updateWidgets();
-                rerenderKeepingScroll();
-            });
+            delete.setOnClickListener(v -> confirmDeleteRoutine(item));
             row.addView(text, weightedWithEndMargin());
             row.addView(edit, iconButtonParams());
             row.addView(delete, iconButtonParamsNoMargin());
@@ -347,6 +336,22 @@ public class MainActivity extends Activity {
                 .show();
     }
 
+    private void confirmDeleteCategory(Category category) {
+        new AlertDialog.Builder(this)
+                .setTitle("카테고리 삭제")
+                .setMessage("'" + category.name + "' 카테고리와 안에 있는 루틴을 모두 삭제할까?")
+                .setNegativeButton("취소", null)
+                .setPositiveButton("삭제", (dialog, which) -> {
+                    db.deleteCategory(category.id);
+                    if (selectedCategoryId == category.id) {
+                        selectedCategoryId = -1;
+                    }
+                    updateWidgets();
+                    rerenderKeepingScroll();
+                })
+                .show();
+    }
+
     private void showRoutineEditor(ScheduleItem item) {
         LinearLayout box = new LinearLayout(this);
         box.setOrientation(LinearLayout.VERTICAL);
@@ -402,6 +407,19 @@ public class MainActivity extends Activity {
                         return;
                     }
                     db.updateItem(item.id, contentText, amountText, mask);
+                    updateWidgets();
+                    rerenderKeepingScroll();
+                })
+                .show();
+    }
+
+    private void confirmDeleteRoutine(ScheduleItem item) {
+        new AlertDialog.Builder(this)
+                .setTitle("루틴 삭제")
+                .setMessage("'" + item.content + suffix(item.amount) + "' 루틴을 삭제할까?")
+                .setNegativeButton("취소", null)
+                .setPositiveButton("삭제", (dialog, which) -> {
+                    db.deleteItem(item.id);
                     updateWidgets();
                     rerenderKeepingScroll();
                 })
