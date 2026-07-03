@@ -195,15 +195,18 @@ final class SchedulerDb extends SQLiteOpenHelper {
 
     List<CategoryStats> weekStats() {
         Calendar start = Calendar.getInstance();
-        start.set(Calendar.DAY_OF_WEEK, start.getFirstDayOfWeek());
-        Calendar end = Calendar.getInstance();
+        int diffFromMonday = (start.get(Calendar.DAY_OF_WEEK) + 5) % 7;
+        start.add(Calendar.DAY_OF_MONTH, -diffFromMonday);
+        Calendar end = (Calendar) start.clone();
+        end.add(Calendar.DAY_OF_MONTH, 6);
         return statsBetween(start, end);
     }
 
     List<CategoryStats> monthStats() {
         Calendar start = Calendar.getInstance();
         start.set(Calendar.DAY_OF_MONTH, 1);
-        Calendar end = Calendar.getInstance();
+        Calendar end = (Calendar) start.clone();
+        end.set(Calendar.DAY_OF_MONTH, end.getActualMaximum(Calendar.DAY_OF_MONTH));
         return statsBetween(start, end);
     }
 

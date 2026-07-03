@@ -334,7 +334,7 @@ public class MainActivity extends Activity {
     private LinearLayout todayTaskRow(ScheduleItem item) {
         boolean done = db.isDoneToday(item.id);
         LinearLayout row = roundedRow();
-        TextView check = body(done ? "●" : "○", 20, PINK_DARK);
+        TextView check = body(done ? "●" : "○", 20, PEACH);
         check.setGravity(Gravity.CENTER);
         TextView text = body(item.content + suffix(item.amount), 16, done ? MUTED : INK);
         if (done) {
