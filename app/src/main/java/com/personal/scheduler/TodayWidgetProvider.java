@@ -31,7 +31,7 @@ public class TodayWidgetProvider extends AppWidgetProvider {
             int widgetId = intent.getIntExtra(EXTRA_WIDGET_ID, AppWidgetManager.INVALID_APPWIDGET_ID);
             long itemId = intent.getLongExtra(EXTRA_ITEM_ID, -1);
             if (widgetId != AppWidgetManager.INVALID_APPWIDGET_ID && itemId >= 0) {
-                WidgetPrefs.toggleDone(context, widgetId, itemId);
+                new SchedulerDb(context).toggleDoneToday(itemId);
                 updateWidget(context, AppWidgetManager.getInstance(context), widgetId);
             }
         }
@@ -112,7 +112,7 @@ public class TodayWidgetProvider extends AppWidgetProvider {
 
     private static void addTaskRow(Context context, RemoteViews views, int widgetId, ScheduleItem item,
                                    int bodyColor, int accent, int fontSize) {
-        boolean done = WidgetPrefs.isDone(context, widgetId, item.id);
+        boolean done = new SchedulerDb(context).isDoneToday(item.id);
         RemoteViews row = new RemoteViews(context.getPackageName(), R.layout.widget_task_row);
         row.setTextViewText(R.id.widgetTaskCheck, done ? "●" : "○");
         row.setTextColor(R.id.widgetTaskCheck, accent);

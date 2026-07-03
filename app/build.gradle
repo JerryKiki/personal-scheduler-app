@@ -2,6 +2,12 @@ plugins {
     id "com.android.application"
 }
 
+def keystoreProperties = new Properties()
+def keystorePropertiesFile = rootProject.file("keystore.properties")
+if (keystorePropertiesFile.exists()) {
+    keystoreProperties.load(new FileInputStream(keystorePropertiesFile))
+}
+
 android {
     namespace "com.personal.scheduler"
     compileSdk 35
@@ -12,5 +18,22 @@ android {
         targetSdk 35
         versionCode 1
         versionName "0.1.0"
+    }
+
+    signingConfigs {
+        release {
+            storeFile file(keystoreProperties["storeFile"] ?: "../release/routine-scheduler-release.jks")
+            storePassword keystoreProperties["storePassword"] ?: ""
+            keyAlias keystoreProperties["keyAlias"] ?: "routine-scheduler"
+            keyPassword keystoreProperties["keyPassword"] ?: ""
+        }
+    }
+
+    buildTypes {
+        release {
+            debuggable false
+            minifyEnabled false
+            signingConfig signingConfigs.release
+        }
     }
 }

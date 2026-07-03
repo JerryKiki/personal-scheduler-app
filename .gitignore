@@ -4,6 +4,8 @@ build/
 app/build/
 
 local.properties
+keystore.properties
+release/
 
 *.iml
 *.log

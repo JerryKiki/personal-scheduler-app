@@ -32,6 +32,8 @@ import java.util.List;
 public class MainActivity extends Activity {
     private static final int REQ_EXPORT = 100;
     private static final int REQ_IMPORT = 101;
+    private static final int TAB_ROUTINES = 0;
+    private static final int TAB_RECORDS = 1;
 
     private static final int BG = Color.rgb(255, 248, 244);
     private static final int CARD = Color.WHITE;
@@ -51,6 +53,7 @@ public class MainActivity extends Activity {
     private String pendingBackupCode;
     private boolean categoryListExpanded = true;
     private boolean routineListExpanded = true;
+    private int currentTab = TAB_ROUTINES;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -77,18 +80,23 @@ public class MainActivity extends Activity {
 
         addHero();
         addBackupButtons();
-        addCategoryEditor();
+        addTabs();
 
         List<Category> categories = db.categories();
         if (selectedCategoryId < 0 && !categories.isEmpty()) {
             selectedCategoryId = categories.get(0).id;
         }
 
-        addCategoryList(categories);
-        if (selectedCategoryId >= 0) {
-            addItemEditor();
-            addItemList();
-            addTodayPreview();
+        if (currentTab == TAB_RECORDS) {
+            addStatsPage();
+        } else {
+            addCategoryEditor();
+            addCategoryList(categories);
+            if (selectedCategoryId >= 0) {
+                addItemEditor();
+                addItemList();
+                addTodayPreview();
+            }
         }
     }
 
@@ -118,6 +126,23 @@ public class MainActivity extends Activity {
         restore.setOnClickListener(v -> chooseBackupFile());
         row.addView(export, weightedWithEndMargin());
         row.addView(restore, weight());
+        root.addView(row, compactSpaced());
+    }
+
+    private void addTabs() {
+        LinearLayout row = row();
+        Button routines = actionButton("루틴", currentTab == TAB_ROUTINES);
+        routines.setOnClickListener(v -> {
+            currentTab = TAB_ROUTINES;
+            rerenderKeepingScroll();
+        });
+        Button records = actionButton("기록", currentTab == TAB_RECORDS);
+        records.setOnClickListener(v -> {
+            currentTab = TAB_RECORDS;
+            rerenderKeepingScroll();
+        });
+        row.addView(routines, weightedWithEndMargin());
+        row.addView(records, weight());
         root.addView(row, compactSpaced());
     }
 
@@ -293,20 +318,93 @@ public class MainActivity extends Activity {
         addCardHeader(card, "오늘의 할일", DateText.todayHeader());
 
         List<ScheduleItem> items = db.todayItems(selectedCategoryId);
-        StringBuilder builder = new StringBuilder();
-        builder.append(category.name).append("\n");
         if (items.isEmpty()) {
-            builder.append("오늘 반복되는 스케줄 없음");
+            TextView preview = body(category.name + "\n오늘 반복되는 스케줄 없음", 16, INK);
+            preview.setPadding(dp(14), dp(12), dp(14), dp(12));
+            preview.setBackground(rounded(CARD, 24, 0, CARD));
+            card.addView(preview, match());
         } else {
             for (ScheduleItem item : items) {
-                builder.append("• ").append(item.content).append(suffix(item.amount)).append("\n");
+                card.addView(todayTaskRow(item), compactSpaced());
             }
         }
-        TextView preview = body(builder.toString().trim(), 16, INK);
-        preview.setPadding(dp(14), dp(12), dp(14), dp(12));
-        preview.setBackground(rounded(CARD, 24, 0, CARD));
-        card.addView(preview, match());
         root.addView(card, spaced());
+    }
+
+    private LinearLayout todayTaskRow(ScheduleItem item) {
+        boolean done = db.isDoneToday(item.id);
+        LinearLayout row = roundedRow();
+        TextView check = body(done ? "●" : "○", 20, PINK_DARK);
+        check.setGravity(Gravity.CENTER);
+        TextView text = body(item.content + suffix(item.amount), 16, done ? MUTED : INK);
+        if (done) {
+            text.setPaintFlags(text.getPaintFlags() | android.graphics.Paint.STRIKE_THRU_TEXT_FLAG);
+        }
+        View.OnClickListener toggle = v -> {
+            db.toggleDoneToday(item);
+            updateWidgets();
+            rerenderKeepingScroll();
+        };
+        row.setOnClickListener(toggle);
+        check.setOnClickListener(toggle);
+        text.setOnClickListener(toggle);
+        LinearLayout.LayoutParams checkParams = new LinearLayout.LayoutParams(dp(32), LinearLayout.LayoutParams.WRAP_CONTENT);
+        checkParams.setMarginEnd(dp(8));
+        row.addView(check, checkParams);
+        row.addView(text, weight());
+        return row;
+    }
+
+    private void addStatsPage() {
+        addStatsSection("오늘 달성률", db.todayStats());
+        addStatsSection("이번 주 달성률", db.weekStats());
+        addStatsSection("이번 달 달성률", db.monthStats());
+    }
+
+    private void addStatsSection(String title, List<CategoryStats> stats) {
+        LinearLayout card = card(CARD);
+        addCardHeader(card, title, "카테고리별 완료율을 확인해요.");
+        if (stats.isEmpty()) {
+            card.addView(muted("아직 카테고리가 없어요."), match());
+        } else {
+            for (CategoryStats stat : stats) {
+                card.addView(statsRow(stat), compactSpaced());
+            }
+        }
+        root.addView(card, spaced());
+    }
+
+    private LinearLayout statsRow(CategoryStats stat) {
+        LinearLayout row = roundedRow();
+        row.setOrientation(LinearLayout.VERTICAL);
+
+        LinearLayout top = row();
+        TextView name = title(stat.categoryName, 16);
+        TextView percent = title(stat.percent() + "%", 18);
+        percent.setTextColor(PINK_DARK);
+        top.addView(name, weightedWithEndMargin());
+        top.addView(percent, wrap());
+        row.addView(top, match());
+
+        TextView count = body(stat.done + "/" + stat.total + " 완료", 14, MUTED);
+        count.setPadding(0, dp(4), 0, dp(8));
+        row.addView(count, match());
+
+        row.addView(progressBar(stat.percent()), match());
+        return row;
+    }
+
+    private LinearLayout progressBar(int percent) {
+        LinearLayout bar = new LinearLayout(this);
+        bar.setOrientation(LinearLayout.HORIZONTAL);
+        bar.setBackground(rounded(PEACH_SOFT, 8, 0, PEACH_SOFT));
+        int filled = Math.max(0, Math.min(100, percent));
+        View fill = new View(this);
+        fill.setBackground(rounded(PINK, 8, 0, PINK));
+        bar.addView(fill, new LinearLayout.LayoutParams(0, dp(8), filled));
+        View rest = new View(this);
+        bar.addView(rest, new LinearLayout.LayoutParams(0, dp(8), Math.max(1, 100 - filled)));
+        return bar;
     }
 
     private void showCategoryEditor(Category category) {

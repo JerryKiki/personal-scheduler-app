@@ -20,6 +20,10 @@ final class DateText {
         return new SimpleDateFormat("yyyyMMdd", Locale.KOREA).format(Calendar.getInstance().getTime());
     }
 
+    static String key(Calendar cal) {
+        return new SimpleDateFormat("yyyyMMdd", Locale.KOREA).format(cal.getTime());
+    }
+
     static int todayBit() {
         return dayBit(Calendar.getInstance().get(Calendar.DAY_OF_WEEK));
     }
